@@ -536,14 +536,19 @@ public class CGKATest {
     public void test_add1(int scale){
         //from scale-1 -> scale
         int GROUP_SIZE = scale;
-        int ADD_SIZE = GROUP_SIZE - 1;
+        int ADD_SIZE = scale - 1;
         int EXEC_TIMES = 50;
-        String dir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-add1.csv";
-        File file = new File(dir);
-        BufferedWriter output = null;
+        String addDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-add2.csv";
+        String createDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-create.csv";
+        File addFile = new File(addDir);
+        File createFile = new File(createDir);
+        BufferedWriter addOutput = null;
+        BufferedWriter createOutput = null;
         try {
-            output = new BufferedWriter(new FileWriter(file, true));// true,则追加写入text文本
-            output.write("groupSize,operationCnt,role,ID,operation,time(ms),encTimes,appendMsg");//Table header
+            addOutput = new BufferedWriter(new FileWriter(addFile, true));// true,则追加写入text文本
+            addOutput.write("groupSize,operationCnt,role,ID,operation,time(ms),encTimes,appendMsg");//Table header
+            createOutput = new BufferedWriter(new FileWriter(createFile, true));// true,则追加写入text文本
+            createOutput.write("groupSize,operationCnt,role,ID,operation,time(ms),encTimes,appendMsg");//Table header
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -574,10 +579,11 @@ public class CGKATest {
             mySleep(5000);
             //create the group
             clients[randIdx].Create(group);//a creates group
+            writeCsv(createOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"create","null");
             mySleep(3000);
             clients[randIdx].Add(clients[ADD_SIZE].ID,clients[ADD_SIZE].getPkAndSvk());
             mySleep(3000);
-            writeCsv(output,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[ADD_SIZE].ID);
+            writeCsv(addOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[ADD_SIZE].ID);
             for(int j=0;j<GROUP_SIZE;j++){
                 clients[j].join();
             }
@@ -585,7 +591,8 @@ public class CGKATest {
         }
         System.out.println("test end");
         try {
-            output.close();
+            addOutput.close();
+            createOutput.close();
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -596,12 +603,17 @@ public class CGKATest {
         //from scale -> scale+1
         int GROUP_SIZE = scale;
         int EXEC_TIMES = 50;
-        String dir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-add2.csv";
-        File file = new File(dir);
-        BufferedWriter output = null;
+        String addDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-add2.csv";
+        String createDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-create.csv";
+        File addFile = new File(addDir);
+        File createFile = new File(createDir);
+        BufferedWriter addOutput = null;
+        BufferedWriter createOutput = null;
         try {
-            output = new BufferedWriter(new FileWriter(file, true));// true,则追加写入text文本
-            output.write("groupSize,operationCnt,role,ID,operation,time(ms),encTimes,appendMsg");//Table header
+            addOutput = new BufferedWriter(new FileWriter(addFile, true));// true,则追加写入text文本
+            addOutput.write("groupSize,operationCnt,role,ID,operation,time(ms),encTimes,appendMsg");//Table header
+            createOutput = new BufferedWriter(new FileWriter(createFile, true));// true,则追加写入text文本
+            createOutput.write("groupSize,operationCnt,role,ID,operation,time(ms),encTimes,appendMsg");//Table header
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -632,10 +644,11 @@ public class CGKATest {
             mySleep(5000);
             //create the group
             clients[randIdx].Create(group);//a creates group
+            writeCsv(createOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"create","null");
             mySleep(3000);
             clients[randIdx].Add(clients[GROUP_SIZE].ID,clients[GROUP_SIZE].getPkAndSvk());
             mySleep(3000);
-            writeCsv(output,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[GROUP_SIZE].ID);
+            writeCsv(addOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[GROUP_SIZE].ID);
             for(int j=0;j<GROUP_SIZE;j++){
                 clients[j].join();
             }
@@ -643,7 +656,8 @@ public class CGKATest {
         }
         System.out.println("test end");
         try {
-            output.close();
+            addOutput.close();
+            createOutput.close();
         }catch (Exception e){
             e.printStackTrace();
         }

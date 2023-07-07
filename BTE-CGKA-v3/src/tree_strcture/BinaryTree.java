@@ -466,6 +466,7 @@ public class BinaryTree {
                     endTime = System.nanoTime();
                     totalTime = endTime - startTime;
                     millisTime = totalTime / 1000000.0;
+                    clientTime = millisTime;
                     //System.out.println("recipient " + mine.ID + " time(add): " + millisTime + "ms");
                     break;
                 case "remove":
@@ -474,6 +475,7 @@ public class BinaryTree {
                     endTime = System.nanoTime();
                     totalTime = endTime - startTime;
                     millisTime = totalTime / 1000000.0;
+                    clientTime = millisTime;
                     //System.out.println("recipient " + mine.ID + " time(remove): " + millisTime + "ms");
                     break;
                 default:
