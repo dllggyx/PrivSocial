@@ -607,22 +607,22 @@ public class CGKATest {
                 else
                     group.addMember(Integer.toString(j), clients[j].getPkAndSvk());
             }
-            mySleep(60000);
+            mySleep(6000);
             //create the group
             clients[randIdx].Create(group);//a creates group
-            mySleep(60000);
+            mySleep(6000);
             //myWait(clients);
             writeCsv(createOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"create","null");
             //mySleep(1000);
             clients[randIdx].Add(clients[ADD_SIZE].ID,clients[ADD_SIZE].getPkAndSvk());
-            mySleep(60000);
+            mySleep(6000);
             //myWait(clients);
             writeCsv(addOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[ADD_SIZE].ID);
             //mySleep(1000);
             for(int j=0;j<GROUP_SIZE;j++){
                 clients[j].join();
             }
-            mySleep(5000);
+            mySleep(2000);
         }
         System.out.println("test end");
         try {

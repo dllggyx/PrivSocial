@@ -42,8 +42,8 @@ public class Main {
 
         //cgkaTest.test_create(8);
         //cgkaTest.test_remove(8);
-        //cgkaTest.test_add1(128);
-        cgkaTest.test_add2(32);
+        cgkaTest.test_add1(64);
+        //cgkaTest.test_add2(64);
     }
 
 
