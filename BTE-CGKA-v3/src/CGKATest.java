@@ -564,7 +564,7 @@ public class CGKATest {
     }
 
     public void test_add1(int scale){
-        test16();
+        //test16();
         //from scale-1 -> scale
         int GROUP_SIZE = scale;
         int ADD_SIZE = scale - 1;
@@ -586,7 +586,7 @@ public class CGKATest {
 
 
         Random rand = new Random();
-        for(int i=32;i<EXEC_TIMES;i++){
+        for(int i=0;i<EXEC_TIMES;i++){
             System.out.println("============================"+i+"============================");
             System.out.println("key generate start");
             Client[] clients = new Client[GROUP_SIZE];
@@ -598,7 +598,7 @@ public class CGKATest {
             for(int j=0;j<GROUP_SIZE;j++){
                 clients[j].startClient();
             }
-            mySleep(7000);
+            mySleep(2000);
             int randIdx = rand.nextInt(ADD_SIZE);
             Group group = new Group();
             for(int j=0;j<ADD_SIZE;j++){
@@ -607,20 +607,22 @@ public class CGKATest {
                 else
                     group.addMember(Integer.toString(j), clients[j].getPkAndSvk());
             }
-//            mySleep(2000);
+            mySleep(60000);
             //create the group
             clients[randIdx].Create(group);//a creates group
-            mySleep(15000);
+            mySleep(60000);
+            //myWait(clients);
             writeCsv(createOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"create","null");
             //mySleep(1000);
             clients[randIdx].Add(clients[ADD_SIZE].ID,clients[ADD_SIZE].getPkAndSvk());
-            mySleep(15000);
+            mySleep(60000);
+            //myWait(clients);
             writeCsv(addOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[ADD_SIZE].ID);
             //mySleep(1000);
             for(int j=0;j<GROUP_SIZE;j++){
                 clients[j].join();
             }
-            //mySleep(5000);
+            mySleep(5000);
         }
         System.out.println("test end");
         try {
@@ -666,7 +668,7 @@ public class CGKATest {
             for(int j=0;j<GROUP_SIZE+1;j++){
                 clients[j].startClient();
             }
-            mySleep(3000);
+            mySleep(2000);
             int randIdx = rand.nextInt(GROUP_SIZE);
             Group group = new Group();
             for(int j=0;j<GROUP_SIZE;j++){
@@ -675,7 +677,7 @@ public class CGKATest {
                 else
                     group.addMember(Integer.toString(j), clients[j].getPkAndSvk());
             }
-            mySleep(5000);
+            mySleep(2000);
             //create the group
             clients[randIdx].Create(group);//a creates group
             mySleep(2000);

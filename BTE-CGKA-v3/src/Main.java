@@ -21,7 +21,7 @@ public class Main {
      *  groupsize-totalOperationCnt-operation.csv
      *  e.g:8-100-update.csv
      * */
-
+    //网络交互时延（轮数）
     public static void main(String[] args){
         CGKATest cgkaTest = new CGKATest();
 
@@ -31,30 +31,8 @@ public class Main {
          *  根据测试的规模选择不同的延时时间
          * */
         cgkaTest.test16();
-        try {
-            Thread.sleep(5000);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        cgkaTest.test_update(256);
-        try {
-            Thread.sleep(5000);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        cgkaTest.test_update(128);
-        try {
-            Thread.sleep(5000);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        cgkaTest.test_update(64);
-        try {
-            Thread.sleep(5000);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        cgkaTest.test_update(32);
+
+        //cgkaTest.test_update(32);
         try {
             Thread.sleep(5000);
         }catch (Exception e){
@@ -64,8 +42,8 @@ public class Main {
 
         //cgkaTest.test_create(8);
         //cgkaTest.test_remove(8);
-        //cgkaTest.test_add1(64);
-        //cgkaTest.test_add2(8);
+        //cgkaTest.test_add1(128);
+        cgkaTest.test_add2(16);
     }
 
 
