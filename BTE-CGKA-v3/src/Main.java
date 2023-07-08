@@ -33,17 +33,17 @@ public class Main {
         cgkaTest.test16();
 
         //cgkaTest.test_update(32);
-        try {
-            Thread.sleep(5000);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+//        try {
+//            Thread.sleep(5000);
+//        }catch (Exception e){
+//            e.printStackTrace();
+//        }
 
 
         //cgkaTest.test_create(8);
         //cgkaTest.test_remove(8);
         //cgkaTest.test_add1(128);
-        cgkaTest.test_add2(16);
+        cgkaTest.test_add2(32);
     }
 
 

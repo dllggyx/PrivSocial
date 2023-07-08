@@ -468,14 +468,14 @@ public class CGKATest {
         //create the group
         System.out.println("create1");
         clients[0].Create(group);//a creates group
-        myWait(clients);
+        myWait(clients,GROUP_SIZE);
 
         Random rand = new Random();
         for(int i=0;i<EXEC_TIMES;i++){
             System.out.println("scale:"+GROUP_SIZE+"============================"+i+"============================");
             int randIdx = rand.nextInt(GROUP_SIZE);
             clients[randIdx].Update();
-            myWait(clients);
+            myWait(clients,GROUP_SIZE);
             writeCsv(output,clients,GROUP_SIZE,clients[randIdx].ID,i,"update","null");
 
             mySleep(timec);
@@ -635,7 +635,6 @@ public class CGKATest {
     }
 
     public void test_add2(int scale){
-        test16();
         //from scale -> scale+1
         int GROUP_SIZE = scale;
         int EXEC_TIMES = 50;
@@ -677,19 +676,21 @@ public class CGKATest {
                 else
                     group.addMember(Integer.toString(j), clients[j].getPkAndSvk());
             }
-            mySleep(2000);
+            mySleep(6000);
             //create the group
             clients[randIdx].Create(group);//a creates group
-            mySleep(2000);
+            mySleep(6000);
+            //myWait(clients,GROUP_SIZE);
             writeCsv(createOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"create","null");
 
             clients[randIdx].Add(clients[GROUP_SIZE].ID,clients[GROUP_SIZE].getPkAndSvk());
-            mySleep(2000);
+            mySleep(6000);
+            //myWait(clients,GROUP_SIZE+1);
             writeCsv(addOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[GROUP_SIZE].ID);
             for(int j=0;j<GROUP_SIZE+1;j++){
                 clients[j].join();
             }
-            mySleep(1000);
+            mySleep(2000);
         }
         System.out.println("test end");
         try {
@@ -712,20 +713,20 @@ public class CGKATest {
         }
     }
 
-    public void myWait(Client[] clients){
-        while(isFinish(clients) == 0){
+    public void myWait(Client[] clients,int size){
+        while(isFinish(clients,size) == 0){
             mySleep(1000);
         }
-        for(Client client: clients){
-            client.Btree.finishFlag = 0;
+        for(int i=0;i<size;i++){
+            clients[i].Btree.finishFlag = 0;
         }
 
     }
 
-    public int isFinish(Client[] clients){
+    public int isFinish(Client[] clients,int size){
         int result = 1;
-        for(Client client: clients){
-            result = result * client.Btree.finishFlag;
+        for(int i=0;i<size;i++){
+            result = result * clients[i].Btree.finishFlag;
         }
         return result;
     }

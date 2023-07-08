@@ -161,7 +161,7 @@ public class BinaryTree {
     }
 
     public Node add(String myID,String targetID,IdentityKeys targetKey){
-        finishFlag = 1;
+        finishFlag = 0;
         encTimes = 1;
         startTime = System.nanoTime();
         count++;
