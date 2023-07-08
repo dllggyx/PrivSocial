@@ -34,12 +34,13 @@ public class ServerTree {
         scale = (int)Math.pow(2,(int)Math.ceil(Math.log(size) / Math.log(2)));
         leaves = new Vector<Node>();
         int leafCnt = 0;
+        Node creator = null;
         for (Map.Entry<String, IdentityKeys> entry : group.memberMap.entrySet()) {
             String key = entry.getKey();
             IdentityKeys value = entry.getValue();
             //If myID is the creator
             if (key.equals(senderID)) {
-                Node creator = new Node();
+                creator = new Node();
                 creator.ID = senderID;
                 creator.setIdentityKeys(value);
                 creator.isLeaf = true;
@@ -52,7 +53,7 @@ public class ServerTree {
                         ServerStorage.tabServer.put(senderID, new TabEntry(value.pkp.pk, value.skp.svk));
                     ServerStorage.tabServer.get(senderID).setKey(value.pkp.pk, value.skp.svk);
                 }
-                server_sample(creator);
+
             } else {
                 leaves.add(new Node(key, value, leafCnt));
                 leafCnt++;
@@ -70,6 +71,7 @@ public class ServerTree {
             leaves.add(node);
         }
         root = buildTree();
+        server_sample(creator);
         //update the data of senderNode from received information
     }
 

@@ -1,6 +1,8 @@
 import network.Client;
+import network.MyServer;
 import tree_strcture.BinaryTree;
 import tree_strcture.Group;
+import tree_strcture.ServerTree;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -84,12 +86,12 @@ public class CGKATest {
     public void test16(){
         int GROUP_SIZE = 16 + 2;
 
-        System.out.println("key generate start");
+        //System.out.println("key generate start");
         Client[] clients = new Client[GROUP_SIZE];
         for(int i=0;i<GROUP_SIZE;i++){
             clients[i] = new Client(Integer.toString(i));
         }
-        System.out.println("key generate end");
+        //System.out.println("key generate end");
 
         for(int i=0;i<GROUP_SIZE;i++){
             clients[i].startClient();
@@ -100,34 +102,34 @@ public class CGKATest {
             group.addMember(Integer.toString(i), clients[i].getPkAndSvk());
         }
         mySleep(5000);
-        System.out.println("create1");
+        //System.out.println("create1");
         clients[0].Create(group);//a creates group
         mySleep(5000);
 
-        System.out.println("update1");
+        //System.out.println("update1");
         clients[7].Update();//a updates
         mySleep(5000);
 
-        System.out.println("update2");
+        //System.out.println("update2");
         clients[13].Update();//e updates
         mySleep(5000);
 
-        System.out.println("update3");
+        //System.out.println("update3");
         clients[5].Update();//d updates
         mySleep(5000);
 
-        System.out.println("remove1");
+        //System.out.println("remove1");
         clients[8].Remove(clients[9].ID,clients[9].getPkAndSvk());//d removes g
         mySleep(5000);
 
-        System.out.println("add1");
+        //System.out.println("add1");
         clients[14].Add(clients[16].ID,clients[16].getPkAndSvk());//a adds i
         mySleep(5000);
 
-        System.out.println("add2");
+        //System.out.println("add2");
         clients[9].Add(clients[17].ID,clients[17].getPkAndSvk());//b adds j
         mySleep(7000);
-        System.out.println("Hello world!");
+        System.out.println("test end!");
         mySleep(5000);
 
         for(int i=0;i<GROUP_SIZE;i++){
@@ -406,10 +408,36 @@ public class CGKATest {
     }
 
     public void test_update(int scale){
-        if(scale == 8 || scale == 16 || scale == 32 || scale == 64 || scale == 128 || scale == 256)
-            return;
+//        if(scale == 8 || scale == 16 || scale == 32 || scale == 64 || scale == 128 || scale == 256)
+//            return;
         int GROUP_SIZE = scale;
         int EXEC_TIMES = 100;
+        int timea = 0,timeb=0,timec=0;
+        if(scale == 8){
+            timea = 1000;
+            timeb = 2000;
+            timec = 500;
+        }else if(scale == 16){
+            timea = 1000;
+            timeb = 3000;
+            timec = 500;
+        }else if(scale == 32){
+            timea = 1000;
+            timeb = 5000;
+            timec = 1000;
+        }else if(scale == 64){//0.6h
+            timea = 1000;
+            timeb = 20000;
+            timec = 1000;
+        }else if(scale == 128){//2.5h
+            timea = 1000;
+            timeb = 90000;
+            timec = 1000;
+        }else if(scale == 256){//3.4h
+            timea = 1000;
+            timeb = 1200000;
+            timec = 1000;
+        }
         String dir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-update.csv";
         File file = new File(dir);
         BufferedWriter output = null;
@@ -435,22 +463,22 @@ public class CGKATest {
         for(int i=1;i<GROUP_SIZE;i++){
             group.addMember(Integer.toString(i), clients[i].getPkAndSvk());
         }
-        mySleep(5000);
+        mySleep(timea);
 
         //create the group
         System.out.println("create1");
         clients[0].Create(group);//a creates group
-        mySleep(60000);
+        myWait(clients);
 
         Random rand = new Random();
         for(int i=0;i<EXEC_TIMES;i++){
-            System.out.println("============================"+i+"============================");
+            System.out.println("scale:"+GROUP_SIZE+"============================"+i+"============================");
             int randIdx = rand.nextInt(GROUP_SIZE);
             clients[randIdx].Update();
-            mySleep(60000);
+            myWait(clients);
             writeCsv(output,clients,GROUP_SIZE,clients[randIdx].ID,i,"update","null");
 
-            mySleep(1000);
+            mySleep(timec);
         }
         try {
             output.close();
@@ -472,6 +500,8 @@ public class CGKATest {
         int TIME = 3000;
         if(scale == 8 || scale == 16)
             TIME = 3000;
+
+
         else if(scale == 32 || scale == 64 || scale == 128)
             TIME = 5000;
         else if(scale == 256)
@@ -534,12 +564,13 @@ public class CGKATest {
     }
 
     public void test_add1(int scale){
+        test16();
         //from scale-1 -> scale
         int GROUP_SIZE = scale;
         int ADD_SIZE = scale - 1;
         int EXEC_TIMES = 50;
-        String addDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-add2.csv";
-        String createDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-create.csv";
+        String addDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-add1.csv";
+        String createDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-create-part1.csv";
         File addFile = new File(addDir);
         File createFile = new File(createDir);
         BufferedWriter addOutput = null;
@@ -555,7 +586,7 @@ public class CGKATest {
 
 
         Random rand = new Random();
-        for(int i=0;i<EXEC_TIMES;i++){
+        for(int i=32;i<EXEC_TIMES;i++){
             System.out.println("============================"+i+"============================");
             System.out.println("key generate start");
             Client[] clients = new Client[GROUP_SIZE];
@@ -567,7 +598,7 @@ public class CGKATest {
             for(int j=0;j<GROUP_SIZE;j++){
                 clients[j].startClient();
             }
-            mySleep(3000);
+            mySleep(7000);
             int randIdx = rand.nextInt(ADD_SIZE);
             Group group = new Group();
             for(int j=0;j<ADD_SIZE;j++){
@@ -576,18 +607,20 @@ public class CGKATest {
                 else
                     group.addMember(Integer.toString(j), clients[j].getPkAndSvk());
             }
-            mySleep(5000);
+//            mySleep(2000);
             //create the group
             clients[randIdx].Create(group);//a creates group
+            mySleep(15000);
             writeCsv(createOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"create","null");
-            mySleep(3000);
+            //mySleep(1000);
             clients[randIdx].Add(clients[ADD_SIZE].ID,clients[ADD_SIZE].getPkAndSvk());
-            mySleep(3000);
+            mySleep(15000);
             writeCsv(addOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[ADD_SIZE].ID);
+            //mySleep(1000);
             for(int j=0;j<GROUP_SIZE;j++){
                 clients[j].join();
             }
-            mySleep(1000);
+            //mySleep(5000);
         }
         System.out.println("test end");
         try {
@@ -600,11 +633,12 @@ public class CGKATest {
     }
 
     public void test_add2(int scale){
+        test16();
         //from scale -> scale+1
         int GROUP_SIZE = scale;
         int EXEC_TIMES = 50;
         String addDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-add2.csv";
-        String createDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-create.csv";
+        String createDir = "evaluation/"+GROUP_SIZE+"-"+ EXEC_TIMES +"-create-part2.csv";
         File addFile = new File(addDir);
         File createFile = new File(createDir);
         BufferedWriter addOutput = null;
@@ -644,12 +678,13 @@ public class CGKATest {
             mySleep(5000);
             //create the group
             clients[randIdx].Create(group);//a creates group
+            mySleep(2000);
             writeCsv(createOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"create","null");
-            mySleep(3000);
+
             clients[randIdx].Add(clients[GROUP_SIZE].ID,clients[GROUP_SIZE].getPkAndSvk());
-            mySleep(3000);
+            mySleep(2000);
             writeCsv(addOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[GROUP_SIZE].ID);
-            for(int j=0;j<GROUP_SIZE;j++){
+            for(int j=0;j<GROUP_SIZE+1;j++){
                 clients[j].join();
             }
             mySleep(1000);
@@ -676,9 +711,21 @@ public class CGKATest {
     }
 
     public void myWait(Client[] clients){
-        for(Client client:clients){
-            //judge isFine
+        while(isFinish(clients) == 0){
+            mySleep(1000);
         }
+        for(Client client: clients){
+            client.Btree.finishFlag = 0;
+        }
+
+    }
+
+    public int isFinish(Client[] clients){
+        int result = 1;
+        for(Client client: clients){
+            result = result * client.Btree.finishFlag;
+        }
+        return result;
     }
 
     public void writeCsv(BufferedWriter output,Client[] clients,int groupSize,String senderID,int operationCnt,String operation,String appendMsg){

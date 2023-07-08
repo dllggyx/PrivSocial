@@ -30,12 +30,42 @@ public class Main {
          *  测试的群组规模有：8/16/32/64/128/256/512
          *  根据测试的规模选择不同的延时时间
          * */
+        cgkaTest.test16();
+        try {
+            Thread.sleep(5000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        cgkaTest.test_update(256);
+        try {
+            Thread.sleep(5000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        cgkaTest.test_update(128);
+        try {
+            Thread.sleep(5000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        cgkaTest.test_update(64);
+        try {
+            Thread.sleep(5000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        cgkaTest.test_update(32);
+        try {
+            Thread.sleep(5000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
 
-        //cgkaTest.test_update(256);
+
         //cgkaTest.test_create(8);
         //cgkaTest.test_remove(8);
-        //cgkaTest.test_add1(8);
-        cgkaTest.test_add2(8);
+        //cgkaTest.test_add1(64);
+        //cgkaTest.test_add2(8);
     }
 
 

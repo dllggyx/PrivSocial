@@ -49,12 +49,12 @@ public class ServerHandler implements Runnable{
                     ois = new MyObjectInputStream(is);
                 }catch (Exception e){
                     e.printStackTrace();
-                    socket.close();
+                    //socket.close();
                     System.out.println("object read error");
                     break;
                 }
             }
-
+            //删除树结构
             //关闭socket
             socket.close();
             synchronized (ServerStorage.tabServer) {

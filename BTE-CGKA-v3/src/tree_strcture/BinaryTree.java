@@ -36,6 +36,7 @@ public class BinaryTree {
     private EncryptionTools myencTools;
     public int encTimes = 0;
     public boolean isFine = false;
+    public int finishFlag = 0;
 
     public BinaryTree(IdentityKeys k){
         s = null;
@@ -47,7 +48,7 @@ public class BinaryTree {
     }
 
     public void create(Group group, String myID){
-        isFine = false;
+        finishFlag = 1;
         encTimes = 0;
         startTime = System.nanoTime();
         count++;
@@ -118,7 +119,7 @@ public class BinaryTree {
     }
 
     public Node update(String myID){
-        isFine = false;
+        finishFlag = 1;
         startTime = System.nanoTime();
         count++;
         encTimes = 0;
@@ -160,7 +161,7 @@ public class BinaryTree {
     }
 
     public Node add(String myID,String targetID,IdentityKeys targetKey){
-        isFine = false;
+        finishFlag = 1;
         encTimes = 1;
         startTime = System.nanoTime();
         count++;
@@ -197,7 +198,7 @@ public class BinaryTree {
     }
 
     public Node remove(String myID,String targetID,IdentityKeys targetKey){
-        isFine = false;
+        finishFlag = 1;
         encTimes=0;
         startTime = System.nanoTime();
         count++;
@@ -430,6 +431,7 @@ public class BinaryTree {
     }
 
     public void process(MyMessage msg){
+        finishFlag = 0;
         synchronized (BinaryTree.class) {
             isFine = false;
             startTime = System.nanoTime();
@@ -482,10 +484,12 @@ public class BinaryTree {
                     break;
             }
             isFine = true;
+            finishFlag = 1;
         }
     }
 
     private void processInit(MyMessage msg){
+
         size = msg.group.getGroupSize();
         scale = (int)Math.pow(2,(int)Math.ceil(Math.log(size) / Math.log(2)));
         if(leaves != null)
