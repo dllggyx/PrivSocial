@@ -607,22 +607,22 @@ public class CGKATest {
                 else
                     group.addMember(Integer.toString(j), clients[j].getPkAndSvk());
             }
-            mySleep(6000);
+            mySleep(40000);
             //create the group
             clients[randIdx].Create(group);//a creates group
-            mySleep(6000);
+            mySleep(40000);
             //myWait(clients);
             writeCsv(createOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"create","null");
             //mySleep(1000);
             clients[randIdx].Add(clients[ADD_SIZE].ID,clients[ADD_SIZE].getPkAndSvk());
-            mySleep(6000);
+            mySleep(40000);
             //myWait(clients);
             writeCsv(addOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[ADD_SIZE].ID);
             //mySleep(1000);
             for(int j=0;j<GROUP_SIZE;j++){
                 clients[j].join();
             }
-            mySleep(2000);
+            mySleep(4000);
         }
         System.out.println("test end");
         try {
@@ -676,21 +676,21 @@ public class CGKATest {
                 else
                     group.addMember(Integer.toString(j), clients[j].getPkAndSvk());
             }
-            mySleep(6000);
+            mySleep(40000);
             //create the group
             clients[randIdx].Create(group);//a creates group
-            mySleep(6000);
+            mySleep(40000);
             //myWait(clients,GROUP_SIZE);
             writeCsv(createOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"create","null");
 
             clients[randIdx].Add(clients[GROUP_SIZE].ID,clients[GROUP_SIZE].getPkAndSvk());
-            mySleep(6000);
+            mySleep(40000);
             //myWait(clients,GROUP_SIZE+1);
             writeCsv(addOutput,clients,GROUP_SIZE,clients[randIdx].ID,i,"add",clients[GROUP_SIZE].ID);
             for(int j=0;j<GROUP_SIZE+1;j++){
                 clients[j].join();
             }
-            mySleep(2000);
+            mySleep(4000);
         }
         System.out.println("test end");
         try {
@@ -703,6 +703,9 @@ public class CGKATest {
 
     public void test_remove(int scale){
         //多了个置空的过程
+
+
+
     }
 
     public static void mySleep(int time){
