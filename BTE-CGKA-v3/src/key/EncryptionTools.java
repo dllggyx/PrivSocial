@@ -38,6 +38,7 @@ public class EncryptionTools {
             keyAgreement.doFinal(new Curve25519PublicKey(targetpk));
             SecretKey sharedSecret = keyAgreement.generateSecret(ALGORITHM);
             C = myEncrypt(M,sharedSecret.getEncoded());
+
         }catch (Exception e){
             e.printStackTrace();
         }

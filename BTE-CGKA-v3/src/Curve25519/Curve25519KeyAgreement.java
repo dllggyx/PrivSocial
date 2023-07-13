@@ -31,7 +31,8 @@ public class Curve25519KeyAgreement {
                     + Curve25519PublicKey.class.getSimpleName() + " for doFinal");
         }
         mSharedSecret = new byte[KEY_SIZE];
-        Curve25519.curve(mSharedSecret, mPrivateKey, key.getEncoded());
+        Curve25519 curve25519 = new Curve25519();
+        curve25519.curve(mSharedSecret, mPrivateKey, key.getEncoded());
     }
 
     public byte[] generateSecret() throws IllegalStateException {

@@ -10,6 +10,8 @@ import key.IdentityKeys;
 import network.Information;
 import utils.MyUtils;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -30,13 +32,16 @@ public class BinaryTree {
     public Queue<Information> infoBuffer;
     private IdentityKeys myIdentityKeys = null;
     private int count = 0;
-    public long startTime;
-    public long endTime;
+    //public long startTime;
+    //public long endTime;
     public double clientTime;
-    private EncryptionTools myencTools;
+    private final EncryptionTools myencTools;
     public int encTimes = 0;
     public boolean isFine = false;
     public int finishFlag = 0;
+
+    public ThreadMXBean threadMXBean;
+    public long startCpuTime;
 
     public BinaryTree(IdentityKeys k){
         s = null;
@@ -45,15 +50,19 @@ public class BinaryTree {
         infoBuffer = new LinkedList();
         myIdentityKeys = k;
         clientTime = 0;
+
+        threadMXBean = ManagementFactory.getThreadMXBean();
     }
 
     public void create(Group group, String myID){
+        startCpuTime = threadMXBean.getCurrentThreadCpuTime();
+
         finishFlag = 1;
         encTimes = 0;
-        startTime = System.nanoTime();
+        //startTime = System.nanoTime();
         count++;
         size = group.getGroupSize();
-        scale = (int)Math.pow(2,(int)Math.ceil(Math.log(size) / Math.log(2)));
+        scale = (int) Math.pow(2, (int) Math.ceil(Math.log(size) / Math.log(2)));
         leaves = new Vector<Node>();
         int leafCnt = 0;
         for (Map.Entry<String, IdentityKeys> entry : group.memberMap.entrySet()) {
@@ -74,10 +83,10 @@ public class BinaryTree {
                 leafCnt++;
             }
         }
-        for(int i = size;i<scale;i++){
+        for (int i = size; i < scale; i++) {
             Node node = new Node();
             node.isLeaf = true;
-            node.setPos(size+i);
+            node.setPos(size + i);
             leaves.add(node);
         }
 
@@ -86,17 +95,17 @@ public class BinaryTree {
         sample(PKs);
         Vector<Node> minePath = path(mine);
         //resultMap is used to store encrypted seeds in the form of<pk, (enDelta_a,enDelta_b)>
-        Map<byte[], Vector<String>>resultMap = new HashMap<byte[], Vector<String>>();
+        Map<byte[], Vector<String>> resultMap = new HashMap<byte[], Vector<String>>();
 
-        for(Node vertex: minePath){
+        for (Node vertex : minePath) {
             Set<Node> res = resolution(vertex.sibling);
             //然后使用集合中结点的公钥分别加密vertex.parent.delta
-            for(Node nodeRes: res){
+            for (Node nodeRes : res) {
                 byte[] currentPk = nodeRes.getIdentityKeys().pkp.getPublicKey();
                 byte[] delta = vertex.parent.getDelta();
-                byte[] enDelta = myencTools.encryptDelta(mine.getIdentityKeys().pkp.getSecretKey(),currentPk, delta);
+                byte[] enDelta = myencTools.encryptDelta(mine.getIdentityKeys().pkp.getSecretKey(), currentPk, delta);
                 Vector<String> idSet = getSubtreeNodes(nodeRes);
-                resultMap.put(enDelta,idSet);
+                resultMap.put(enDelta, idSet);
                 encTimes++;
             }
         }
@@ -105,22 +114,21 @@ public class BinaryTree {
 
         myIdentityKeys = mine.getIdentityKeys();
 
-        group.addMember(myID,new IdentityKeys(mypkp,myskp,0));
+        group.addMember(myID, new IdentityKeys(mypkp, myskp, 0));
         //then construct the information and send to server
         Information inform = new Information();
         inform.tag = "init";
         inform.enc = resultMap;
         inform.group = group;
-        byte[] sig = myencTools.sign(myIdentityKeys.skp.svk,resultMap);
-        inform.constructMessage(myID,myIdentityKeys.pkp.pk, myIdentityKeys.skp.svk, PKs,null,sig);
-
+        byte[] sig = myencTools.sign(myIdentityKeys.skp.svk, resultMap);
+        inform.constructMessage(myID, myIdentityKeys.pkp.pk, myIdentityKeys.skp.svk, PKs, null, sig);
         send(inform);
 
     }
 
     public Node update(String myID){
         finishFlag = 1;
-        startTime = System.nanoTime();
+        //startTime = System.nanoTime();
         count++;
         encTimes = 0;
         ArrayList<byte[]> PKs = new ArrayList<byte[]>();
@@ -163,7 +171,7 @@ public class BinaryTree {
     public Node add(String myID,String targetID,IdentityKeys targetKey){
         finishFlag = 0;
         encTimes = 1;
-        startTime = System.nanoTime();
+        //startTime = System.nanoTime();
         count++;
         //No sample() required
         //size = size + 1;
@@ -200,7 +208,7 @@ public class BinaryTree {
     public Node remove(String myID,String targetID,IdentityKeys targetKey){
         finishFlag = 1;
         encTimes=0;
-        startTime = System.nanoTime();
+        //startTime = System.nanoTime();
         count++;
         byte[] targetpk = targetKey.pkp.pk;
         byte[] targetsvk = targetKey.skp.svk;
@@ -295,11 +303,15 @@ public class BinaryTree {
 
     public void send(Information inform){
         infoBuffer.add(inform);
-        endTime = System.nanoTime();
-        long totalTime = endTime - startTime;
-        double millisTime = totalTime/1000000.0;
-        clientTime = millisTime;
-        System.out.println("sender " + mine.ID + " time(" + inform.tag + "):" +millisTime+"ms");
+//        endTime = System.nanoTime();
+//        long totalTime = endTime - startTime;
+//        double millisTime = totalTime/1000000.0;
+//        clientTime = millisTime;
+
+        long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
+        double cpuTime = (endCpuTime - startCpuTime)/1000000.0;
+        clientTime = cpuTime;
+        System.out.println("sender " + mine.ID + " cpu time(" + inform.tag + "):" +cpuTime+"ms");
         isFine = true;
     }
 
@@ -432,9 +444,10 @@ public class BinaryTree {
 
     public void process(MyMessage msg){
         finishFlag = 0;
+        long endCpuTime;
         synchronized (BinaryTree.class) {
             isFine = false;
-            startTime = System.nanoTime();
+            startCpuTime = threadMXBean.getCurrentThreadCpuTime();
 
             long totalTime;
             double millisTime = 0;
@@ -444,8 +457,8 @@ public class BinaryTree {
                 case "init":
                     processInit(msg);
                     //showTree(msg.tag);
-                    endTime = System.nanoTime();
-                    totalTime = endTime - startTime;
+                    endCpuTime = threadMXBean.getCurrentThreadCpuTime();
+                    totalTime = endCpuTime - startCpuTime;
                     millisTime = totalTime / 1000000.0;
                     clientTime = millisTime;
 //                    System.out.println("recipient " + mine.ID + " time(create): " + millisTime + "ms");
@@ -456,8 +469,8 @@ public class BinaryTree {
                 case "update":
                     processUpdate(msg);
                     //showTree(msg.tag);
-                    endTime = System.nanoTime();
-                    totalTime = endTime - startTime;
+                    endCpuTime = threadMXBean.getCurrentThreadCpuTime();
+                    totalTime = endCpuTime - startCpuTime;
                     millisTime = totalTime / 1000000.0;
                     clientTime = millisTime;
                     //System.out.println("recipient " + mine.ID + " time(update): " + millisTime + "ms");
@@ -465,8 +478,8 @@ public class BinaryTree {
                 case "add":
                     processAdd(msg);
                     //showTree(msg.tag);
-                    endTime = System.nanoTime();
-                    totalTime = endTime - startTime;
+                    endCpuTime = threadMXBean.getCurrentThreadCpuTime();
+                    totalTime = endCpuTime - startCpuTime;
                     millisTime = totalTime / 1000000.0;
                     clientTime = millisTime;
                     //System.out.println("recipient " + mine.ID + " time(add): " + millisTime + "ms");
@@ -474,8 +487,8 @@ public class BinaryTree {
                 case "remove":
                     processRemove(msg);
                     //showTree(msg.tag);
-                    endTime = System.nanoTime();
-                    totalTime = endTime - startTime;
+                    endCpuTime = threadMXBean.getCurrentThreadCpuTime();
+                    totalTime = endCpuTime - startCpuTime;
                     millisTime = totalTime / 1000000.0;
                     clientTime = millisTime;
                     //System.out.println("recipient " + mine.ID + " time(remove): " + millisTime + "ms");
@@ -725,3 +738,14 @@ public class BinaryTree {
     }
 
 }
+
+/*
+* create时间过大的原因找到了
+* 运行多个线程，在执行当前线程的时候，可能被调度去执行其他线程了
+* 64人群组下，有时测的几十ms，有时测的好几百，好几百基本都出自于加解密、密钥生成部分
+* 加解密、密钥生成部分本身用时长，被调度的几率大，导致这部分测的时间大
+*
+* 之前测的时间是用户执行的时间，应该测线程在cpu中实际调度的时间
+* 好消息是知道了原因、不会有错误数据
+* 坏消息是如果要保证数据完美，需要把之前测过的再测一遍
+* */

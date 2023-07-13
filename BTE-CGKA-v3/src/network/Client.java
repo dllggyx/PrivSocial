@@ -153,24 +153,24 @@ public class Client implements Runnable{
 
 
     public void Create(Group group){
-        Btree.startTime = System.currentTimeMillis();
+        Btree.startCpuTime = Btree.threadMXBean.getCurrentThreadCpuTime();
         Btree.create(group,ID);
         identityKeys = Btree.mine.getIdentityKeys();
     }
 
     public void Update(){
-        Btree.startTime = System.currentTimeMillis();
+        Btree.startCpuTime = Btree.threadMXBean.getCurrentThreadCpuTime();
         Btree.update(ID);
         identityKeys = Btree.mine.getIdentityKeys();
     }
 
     public void Add(String targetID,IdentityKeys targetKey){
-        Btree.startTime = System.currentTimeMillis();
+        Btree.startCpuTime = Btree.threadMXBean.getCurrentThreadCpuTime();
         Btree.add(ID,targetID,targetKey);
     }
 
     public void Remove(String targetID,IdentityKeys targetKey){
-        Btree.startTime = System.currentTimeMillis();
+        Btree.startCpuTime = Btree.threadMXBean.getCurrentThreadCpuTime();
         Btree.remove(ID,targetID,targetKey);
         identityKeys = Btree.mine.getIdentityKeys();
     }

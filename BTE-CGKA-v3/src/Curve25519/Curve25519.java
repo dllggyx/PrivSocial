@@ -77,7 +77,7 @@ public class Curve25519 {
      *   k  [in]  your private key for key agreement
      *   P  [in]  peer's public key
      */
-    public static final void curve(byte[] Z, byte[] k, byte[] P) {
+    public final void curve(byte[] Z, byte[] k, byte[] P) {
         core(Z, null, k, P);
     }
 

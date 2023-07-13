@@ -40,10 +40,10 @@ public class Main {
 //        }
 
 
-        //cgkaTest.test_create(8);
+        cgkaTest.test_create(64);
         //cgkaTest.test_remove(8);
-        cgkaTest.test_add1(256);
-        //cgkaTest.test_add2(256);
+        //cgkaTest.test_add1(256);
+        //cgkaTest.test_add2(64);
 
 
     }
