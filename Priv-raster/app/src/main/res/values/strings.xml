@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Blending Desktop</string>
+    <string name="notification_channel_name">Overlay Notification Channel</string>
+    <string name="notification_channel_description">Channel to support foreground mode for the overlay application</string>
+    <string name="notification_ticker">Is running</string>
+    <string name="notification_action_stop">STOP</string>
+    <string name="error_permission_overlay">Overlay permission is required</string>
+    <string name="error_permission_screen_capture">Screen capture permission is required</string>
+</resources>

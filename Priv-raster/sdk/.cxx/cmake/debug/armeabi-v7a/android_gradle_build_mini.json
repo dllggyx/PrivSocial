@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "C:\\Users\\gyx\\AppData\\Local\\Android\\Sdk\\ndk\\21.0.6113669\\build\\cmake\\android.toolchain.cmake",
+    "E:\\projects_master\\en_path\\trusted_media_transmission\\overlayAdvanced\\android-img-recast\\sdk\\libcxx_helper\\CMakeLists.txt",
+    "C:\\Users\\gyx\\AppData\\Local\\Android\\Sdk\\ndk\\21.0.6113669\\build\\cmake\\platforms.cmake"
+  ],
+  "cleanCommands": [
+    "C:\\Users\\gyx\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe -C \"E:\\projects_master\\en_path\\trusted_media_transmission\\overlayAdvanced\\android-img-recast\\sdk\\.cxx\\cmake\\debug\\armeabi-v7a\" clean"
+  ],
+  "buildTargetsCommand": "C:\\Users\\gyx\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe  -C \"E:\\projects_master\\en_path\\trusted_media_transmission\\overlayAdvanced\\android-img-recast\\sdk\\.cxx\\cmake\\debug\\armeabi-v7a\" {LIST_OF_TARGETS_TO_BUILD}",
+  "libraries": {
+    "opencv_jni_shared-Debug-armeabi-v7a": {
+      "artifactName": "opencv_jni_shared",
+      "buildCommand": "C:\\Users\\gyx\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe -C \"E:\\projects_master\\en_path\\trusted_media_transmission\\overlayAdvanced\\android-img-recast\\sdk\\.cxx\\cmake\\debug\\armeabi-v7a\" opencv_jni_shared",
+      "abi": "armeabi-v7a",
+      "output": "E:\\projects_master\\en_path\\trusted_media_transmission\\overlayAdvanced\\android-img-recast\\sdk\\.cxx\\cmake\\debug\\armeabi-v7a\\libopencv_jni_shared.a",
+      "runtimeFiles": []
+    }
+  }
+}

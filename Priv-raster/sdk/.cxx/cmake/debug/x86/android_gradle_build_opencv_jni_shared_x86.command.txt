@@ -1,0 +1,7 @@
+Executable : C:\Users\gyx\AppData\Local\Android\Sdk\cmake\3.10.2.4988404\bin\ninja.exe
+arguments : 
+-C
+E:\projects_master\en_path\trusted_media_transmission\overlayAdvanced\android-img-recast\sdk\.cxx\cmake\debug\x86
+opencv_jni_shared
+jvmArgs : 
+

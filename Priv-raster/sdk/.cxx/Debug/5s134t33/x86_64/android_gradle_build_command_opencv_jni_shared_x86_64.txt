@@ -1,0 +1,7 @@
+Executable : E:\Application\software\android_studio\SDK\cmake\3.18.1\bin\ninja.exe
+arguments : 
+-C
+E:\Work\Projects\Research\trusted_media_transmission\overlayAdvanced\android-img-recast\sdk\.cxx\Debug\5s134t33\x86_64
+opencv_jni_shared
+jvmArgs : 
+

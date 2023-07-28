@@ -1,0 +1,2 @@
+ninja: Entering directory `E:\Work\Projects\Research\trusted_media_transmission\overlayAdvanced\android-img-recast\sdk\.cxx\Debug\5s134t33\arm64-v8a'
+ninja: no work to do.

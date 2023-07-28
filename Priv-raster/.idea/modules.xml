@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/android-img-recast.iml" filepath="$PROJECT_DIR$/.idea/modules/android-img-recast.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/android-img-recast.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/android-img-recast.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/android-img-recast.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/android-img-recast.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/android-img-recast.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/android-img-recast.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/android-img-recast.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/android-img-recast.app.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sdk/android-img-recast.sdk.iml" filepath="$PROJECT_DIR$/.idea/modules/sdk/android-img-recast.sdk.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sdk/android-img-recast.sdk.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/sdk/android-img-recast.sdk.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sdk/android-img-recast.sdk.main.iml" filepath="$PROJECT_DIR$/.idea/modules/sdk/android-img-recast.sdk.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sdk/android-img-recast.sdk.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/sdk/android-img-recast.sdk.unitTest.iml" />
+    </modules>
+  </component>
+</project>
