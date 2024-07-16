@@ -40,7 +40,7 @@ This part contains the code for the compression-resistant image encryption schem
 ```
 python ./experiment/rgb_DCTencrypt.py
 ```
-You can modify the configuration information by editing the `config.ini` file.
+You can modify the configuration information by editing the `./experiment/config.ini` file.
 
 
 ## Priv-raster
