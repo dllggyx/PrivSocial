@@ -10,7 +10,7 @@ The basic components of PrivSocial are as follows:
 
 ## CGKA
 The CGKA directory contains the basic TreeKEM implemented by Java, where submitted messages are forwarded by the relay server. 
-你需要通过如下命令来运行代码:
+To run the code, follow these commands:
 1. Start the Relay Server:
 ```
 cd CGKA/BTE-CGKA-v3/src
