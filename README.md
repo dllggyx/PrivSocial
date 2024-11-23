@@ -40,6 +40,10 @@ This part contains the code for the compression-resistant image encryption schem
 ```
 python ./experiment/rgb_DCTencrypt.py
 ```
+You can execute the following file to test using compression functions in real environments: 
+```
+python ./experiment/real_env_DCTencrypt.py
+```
 You can modify the configuration information by editing the `./experiment/config.ini` file.
 
 
