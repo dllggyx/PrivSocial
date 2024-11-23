@@ -1,4 +1,3 @@
-import base64
 import math
 
 import cv2
@@ -6,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 import DCT_test2
+from PIL import Image
 import myJpegCompress
 from configparser import ConfigParser
 from construct_jpeg.build_jpeg import generate_jpeg, degenerate_jpeg
@@ -51,35 +51,6 @@ isEncryptUV表示是否加密UV通道
 isFirstStage = False为不会将图片中小数强转为整数，反之则会
 在对Y通道做抗压缩加密的基础上, isXor == False为对Y通道做乘法加密; isXor == True为对Y通道做异或加密
 '''
-# isDecrypt = True
-# # Y是否要块加密
-# isBlock = True
-# # Y是否抗压缩加密
-# isYAntiCompressEncrypt = True
-# isEncryptUV = True
-# isXor = False
-# isFirstStage = False
-# # decimalNum控制小数位数，大于20则全部保留
-# decimalNum = 100
-# image_name = 'square3.jpeg'
-# # imgPath = '../img/' + image_name
-#
-#
-# key = 276300238
-# keyY = 24580200
-#
-# # key = 1735916705897
-# # keyY = 29340867918
-#
-# M = 800
-# N = 800
-#
-# # M = 128
-# # N = 128
-#
-# # 控制是否降采样
-# downSamplingFlag = True
-# quantizationFlag = True
 
 
 # 使用CV2包得到的不是通常的RGB顺序，而是BGR顺序，在上述代码第3行中可将图片颜色空间由BGR转为RGB
@@ -108,7 +79,6 @@ def block_encrypt_decrypt(src_Y, src_U, src_V, isBlockDecrypt):
     ceil_imgU = []
     ceil_imgV = []
     ceil_imgY = []
-
     for j in range(0, int(N / 8)):
         for i in range(0, int(M / 8)):
             rectU = img_origin_U[8 * i:8 * i + 8, 8 * j:8 * j + 8]
@@ -134,8 +104,6 @@ def block_encrypt_decrypt(src_Y, src_U, src_V, isBlockDecrypt):
     if isBlockDecrypt:
         random.seed(key)
         # 置换加密
-        # ceil_imgU = random.sample(ceil_imgU, len(ceil_imgU))
-        # ceil_imgV = random.sample(ceil_imgV, len(ceil_imgV))
         shuffle_array = [a for a in range(int(xx * yy / 64))]
         shuffle_array = random.sample(shuffle_array, len(shuffle_array))
         _ceil_imgU = np.copy(ceil_imgU)
@@ -280,6 +248,28 @@ def proposed_scheme_uint8_to_float(src_Y):
     return src
 
 
+def down_sampling(src_UV):
+    img_origin = np.copy(src_UV)
+    # ROI裁剪
+    result = np.copy(img_origin)
+
+    for j in range(0, int(N / 2)):
+        for i in range(0, int(M / 2)):
+            block = img_origin[2 * i:2 * i + 2, 2 * j:2 * j + 2]
+            # value = block[0, 0] + block[0, 1] + block[1, 0] + block[1, 1]
+            # value_int = int(value/4)
+            block.fill(block[0, 0])
+            result[2 * i:2 * i + 2, 2 * j:2 * j + 2] = block
+
+    return result
+
+
+# opencv to PIL
+def cv2PIL_RGB(img_cv):
+    img_rgb = img_cv[:, :, ::-1]  # OpenCV 的通道顺序为 BGR, 转换成RGB
+    # nparray
+    img_pil = Image.fromarray(np.uint8(img_rgb))
+    return img_pil
 
 
 def main(img_path):
@@ -290,9 +280,7 @@ def main(img_path):
 
     # 色彩空间转换(由RGB-->YUV)
     ycbcr_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2YUV)
-    # cv2.imshow('original image converted to YUV', ycbcr_image)
-    # cv2.waitKey(0)
-    # img_originalData_Y_before, img_originalData_U, img_originalData_V为未经操作的原始数据
+
     img_originalData_Y = ycbcr_image[:, :, 0]
     img_originalData_U = ycbcr_image[:, :, 1]
     img_originalData_V = ycbcr_image[:, :, 2]
@@ -302,204 +290,111 @@ def main(img_path):
     ciphertext_U = np.copy(img_originalData_U)
     ciphertext_V = np.copy(img_originalData_V)
 
-    ciphertext_Y_after = np.copy(ciphertext_Y)
+    # 对UV提前做降采样
+    dec_U = down_sampling(ciphertext_U)
+    dec_V = down_sampling(ciphertext_V)
 
-
-    eY, eU, eV = block_encrypt_decrypt(ciphertext_Y, ciphertext_U, ciphertext_V, False)
+    eY, eU, eV = block_encrypt_decrypt(ciphertext_Y, dec_U, dec_V, False)
     ciphertext_U = np.copy(eU)
     ciphertext_V = np.copy(eV)
-    if isBlock:
-        ciphertext_Y = np.copy(eY)
-        ciphertext_Y_after = np.copy(eY)
+    ciphertext_Y = np.copy(eY)
 
 
-    # 如果采用异或加密，没有封装好的函数，需要先经过dct，否则不需要
-    img_Y_before = None
-    img_Y_after = None
-    if isYAntiCompressEncrypt:
-        if not isBlock:
-            if isXor:
-                img_Y_before = img_originalData_Y.astype(np.float32)
-                img_Y_after = cv2.dct(img_Y_before)
-                img_Y_after = img_originalData_Y.astype(np.uint8)
-            else:
-                img_Y_after = img_Y_before
-        else:
-            if isXor:
-                img_Y_before = ciphertext_Y.astype(np.float32)
-                img_Y_after = cv2.dct(img_Y_before)
-                img_Y_after = ciphertext_Y.astype(np.uint8)
-            else:
-                img_Y_after = img_Y_before
-
-
-    Key_1 = np.random.randint(0, 255, size=[M, N], dtype=np.uint8)
-
-    if isYAntiCompressEncrypt:
-        if isXor:
-            ciphertext_Y = cv2.bitwise_xor(img_Y_after, Key_1)
-            ciphertext_Y = ciphertext_Y.astype(np.float32)
-            ciphertext_Y_after = cv2.idct(ciphertext_Y)
-            if isFirstStage:
-                ciphertext_Y_after = ciphertext_Y_after.astype(np.uint8)
-        else:
-            # 加密Y通道
-            img_dct_Y = DCT_test2.dct_block(ciphertext_Y, keyY)
-            if isFirstStage:
-                ciphertext_Y_after = img_dct_Y.astype(np.uint8)
-            else:
-                if decimalNum > 20:
-                    ciphertext_Y_after = img_dct_Y
-                else:
-                    ciphertext_Y_after = np.round(img_dct_Y, decimals=0)
-                    # ciphertext_Y_after = proposed_scheme_float_to_uint8(img_dct_Y)
-                    #
-                    #
-                    # generate_jpeg(img_originalData_Y, './generate_img.jpeg')
-                    #
-                    # print('11111111111111111111')
-                    #
-                    # ''' 卡住了 '''
-                    # # generate_temp = degenerate_jpeg('./generate_img.jpeg')
-                    # generate_temp = myJpegCompress.decompress('../result/src/source.jpeg')
-                    #
-                    # print('22222222222222222')
-                    #
-                    # cv2.imshow("generate", generate_temp)
-                    '''
-                    ================= 单个像素编码范围测试 =================
-                    '''
-
-                    ciphertext_Y_after += 128
-                    print(np.min(ciphertext_Y_after))
-                    print(np.max(ciphertext_Y_after))
-                    print(ciphertext_Y_after.shape)
-
-                    '''
-                    ================   测   试   结   束   ===============
-                    '''
-
-
-                    # img_originalData_Y = img_originalData_Y.astype(np.float32)
-                    # img_originalData_Y2 = DCT_test2.dct_block(img_originalData_Y, 12345)
-                    # ciphertext_Y_after = proposed_scheme_float_to_uint8(img_originalData_Y2)
-                    #
-                    # ttttt = DCT_test2.compress_before_idct(ciphertext_Y_after)
-                    # ttttt1 = DCT_test2.idct_block_nocompress(ttttt, 12345)
-                    # cv2.imshow('ttttt1',ttttt1.astype(np.uint8))
-                    # cv2.waitKey(0)
-
-
-        # cv2.imshow('Y channel\'s result with anti-compress encrypt, isXor = ' + str(isXor), ciphertext_Y_after.astype(np.uint8))
-        # cv2.waitKey(0)
-
+    # 加密Y通道
+    img_dct_Y = DCT_test2.dct_block(ciphertext_Y, keyY)
+    ciphertext_Y_after = np.round(img_dct_Y, decimals=0)
+    ciphertext_Y_after += 128
+    print(np.min(ciphertext_Y_after))
+    print(np.max(ciphertext_Y_after))
+    print(ciphertext_Y_after.shape)
+    ciphertext_Y_after = ciphertext_Y_after.astype(np.uint8)
 
     # 显示加密效果
-    ciphertext_YUV = cv2.merge([ciphertext_Y_after.astype(np.uint8), ciphertext_U, ciphertext_V])
+    ciphertext_YUV = cv2.merge([ciphertext_Y_after, ciphertext_U, ciphertext_V])
     encrypt_rgb = cv2.cvtColor(ciphertext_YUV, cv2.COLOR_YUV2BGR)
-    cv2.imshow('YUV channels are all encrypted and then converted to RGB', encrypt_rgb)
-    cv2.imwrite('construct_jpeg/encode_img/y_' + image_name, ciphertext_Y_after.astype(np.uint8), [int( cv2.IMWRITE_JPEG_QUALITY), 80])
-    # cv2.imwrite('../result/ourscheme_enc/' + image_name, encrypt_rgb)
-    #  代码不影响逻辑，仅用于查看效果
-    ciphertext_YUV_1 = cv2.merge([ciphertext_Y_after.astype(np.uint8), img_originalData_U, img_originalData_V])
-    encrypt_rgb_1 = cv2.cvtColor(ciphertext_YUV_1, cv2.COLOR_YUV2BGR)
-    cv2.imshow('only Y channel is encrypted and then converted to RGB', encrypt_rgb_1)
-    #  代码不影响逻辑，仅用于查看效果
-    ciphertext_YUV_2 = cv2.merge([img_originalData_Y.astype(np.uint8), ciphertext_U, ciphertext_V])
-    encrypt_rgb_2 = cv2.cvtColor(ciphertext_YUV_2, cv2.COLOR_YUV2BGR)
-    # cv2.imshow('only UV channels are encrypted and then converted to RGB', encrypt_rgb_2)
-    # cv2.waitKey(0)
-    # if isYAntiCompressEncrypt:
-    #     cv2.imwrite('../img/en_' + image_name, encrypt_rgb)
-    # else:
-    #     cv2.imwrite('../img/en_block_' + image_name, encrypt_rgb)
+    pil_img = cv2PIL_RGB(encrypt_rgb)
+    pil_img.save('construct_jpeg/encode_img/y_' + image_name, quality=100, subsampling=0)
+    # cv2.imshow('YUV channels are all encrypted and then converted to RGB', encrypt_rgb)
+    # cv2.imwrite('construct_jpeg/encode_img/y_' + image_name, encrypt_rgb, [int( cv2.IMWRITE_JPEG_QUALITY), 100])
 
+    # aa, bb, cc = block_encrypt_decrypt(ciphertext_Y_after, ciphertext_U, ciphertext_V, True)
+    #
+    # cv2.imshow('Y', aa)
+    # cv2.imshow('U', bb)
+    # cv2.imshow('V', cc)
+    # cv2.waitKey(0)
+
+    '''
+    ============================================== Decrypt ==============================================
+    '''
     # 初始化解密结果
-    decryptedtext_Y = ciphertext_Y_after.copy()
-    decryptedtext_U = ciphertext_U.copy()
-    decryptedtext_V = ciphertext_V.copy()
-    if not isEncryptUV:
-        origin = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2YUV)
-        decryptedtext_U = origin[:, :, 1]
-        decryptedtext_V = origin[:, :, 2]
+    # img_dec = cv2.imread('construct_jpeg/encode_img/y_' + image_name)
+    img_dec = cv2.imread('construct_jpeg/encode_img/y_square3_aftertwitter.jpg')
 
-    # result_image = cv2.cvtColor(ycbcr_image, cv2.COLOR_YUV2BGR)
-    # cv2.imshow('result',result_image)
-    # cv2.waitKey(0)
+    ycbcr_dec = cv2.cvtColor(img_dec, cv2.COLOR_BGR2YUV)
+    dec_Y = ycbcr_dec[:, :, 0]
+    dec_U = ycbcr_dec[:, :, 1]
+    dec_V = ycbcr_dec[:, :, 2]
 
     if isDecrypt:
-        # 解密
-        if isYAntiCompressEncrypt:
-            if isXor:
-                ciphertext_Y_after = ciphertext_Y_after.astype(np.float32)
-                ciphertext_Y_after_dct = cv2.dct(ciphertext_Y_after)
-                ciphertext_Y_after_dct = ciphertext_Y_after_dct.astype(np.uint8)
-                decryptedtext_Y_before = cv2.bitwise_xor(ciphertext_Y_after_dct, Key_1)  # 将密文的B通道与密钥进行异或运算
-                decryptedtext_Y_before = decryptedtext_Y_before.astype(np.float32)
-                decryptedtext_Y = cv2.idct(decryptedtext_Y_before)
-                decryptedtext_Y = decryptedtext_Y.astype(np.uint8)
-            else:
-                # 压缩
-                img_temp20241007 = cv2.imread('construct_jpeg/encode_img/y_' + image_name, cv2.IMREAD_GRAYSCALE)
-                cv2.imshow('img_temp20241007', img_temp20241007)
-                img_temp20241007 = img_temp20241007.astype(np.float32)
-                img_temp20241007 -= 128
-                print(np.min(img_temp20241007))
-                print(np.max(img_temp20241007))
-                '''20241007暂时注释一行'''
-               ##### Y_after_compress = DCT_test2.compress_before_idct(ciphertext_Y_after)
-                print(img_temp20241007.shape)
 
-                ''' ##### 均是20241007注释的'''
-                Y_after_compress = DCT_test2.compress_before_idct(img_temp20241007)
-
-
-                # Y_after_compress_1 = np.round(Y_after_compress, decimals=0)
-
-                # Y_after_compress_uint = proposed_scheme_uint8_to_float(Y_after_compress)
-                # idct解密
-                decryptedtext_Y = DCT_test2.idct_block_decompress(Y_after_compress, keyY)
-
-                # 压缩和idct解密
-                # decryptedtext_Y = DCT_test2.idct_block(ciphertext_Y_after, keyY, quantizationFlag)
-                decryptedtext_Y = decryptedtext_Y.astype(np.uint8)
+        dec_Y = dec_Y.astype(np.float32)
+        dec_Y -= 128
+        # idct解密
+        Y_after_compress = DCT_test2.compress_before_idct(dec_Y)
+        decompress_Y = DCT_test2.idct_block_decompress(Y_after_compress, keyY)
+        decompress_Y = decompress_Y.astype(np.uint8)
+        dec_Y_temp = np.copy(decompress_Y)
 
         # 块解密
-        # 存储压缩后的图像
-        u_compress_path = '../img/u.jpeg'
-        cv2.imwrite(u_compress_path, ciphertext_U, [cv2.IMWRITE_JPEG_QUALITY, 50])
-        u = cv2.imread(u_compress_path, -1)
-        ciphertext_U = np.copy(u)
-
-        v_compress_path = '../img/v.jpeg'
-        cv2.imwrite(v_compress_path, ciphertext_V, [cv2.IMWRITE_JPEG_QUALITY, 50])
-        v = cv2.imread(v_compress_path, -1)
-        ciphertext_V = np.copy(v)
-
-        if not isYAntiCompressEncrypt:
-            yy_result = myJpegCompress.compress_block(decryptedtext_Y, 50).astype(np.uint8)
-            decryptedtext_Y = np.copy(yy_result)
-            # cv2.imwrite('../img/y.jpeg',decryptedtext_Y)
-            # yy_result = cv2.imread('../img/y.jpeg')
-
-        dY, dU, dV = block_encrypt_decrypt(decryptedtext_Y, ciphertext_U, ciphertext_V, True)
+        dY, dU, dV = block_encrypt_decrypt(dec_Y_temp, dec_U, dec_V, True)
         decryptedtext_U = np.copy(dU)
         decryptedtext_V = np.copy(dV)
         decryptedtext_Y = np.copy(dY)
 
+        cv2.imshow('111',decryptedtext_U)
+        # 泛华
+        # decryptedtext_U1 = np.copy(decryptedtext_U)
+        # for j in range(0, int(N / 8)):
+        #     for i in range(0, int(M / 8)):
+        #         block = decryptedtext_U[8 * i:8 * i + 8, 8 * j:8 * j + 8]
+        #         for line in range(0, 8):
+        #             block[line, 7] = block[line, 5]
+        #             block[7, line] = block[5, line]
+        #             block[7 - line, 7] = block[7 - line, 5]
+        #             block[7, 7 - line] = block[5, 7 - line]
+        #
+        #             block[line, 6] = block[line, 5]
+        #             block[6, line] = block[5, line]
+        #             block[6 - line, 7] = block[7 - line, 5]
+        #             block[6, 7 - line] = block[5, 7 - line]
+        #         decryptedtext_U1[8 * i:8 * i + 8, 8 * j:8 * j + 8] = block
+        #
+        # decryptedtext_V1 = np.copy(decryptedtext_V)
+        # for j in range(0, int(N / 8)):
+        #     for i in range(0, int(M / 8)):
+        #         block = decryptedtext_V[8 * i:8 * i + 8, 8 * j:8 * j + 8]
+        #         for line in range(0, 8):
+        #             block[line, 7] = block[line, 5]
+        #             block[7, line] = block[5, line]
+        #             block[7 - line, 7] = block[7 - line, 5]
+        #             block[7, 7 - line] = block[5, 7 - line]
+        #
+        #             block[line, 6] = block[line, 5]
+        #             block[6, line] = block[5, line]
+        #             block[6 - line, 7] = block[7 - line, 5]
+        #             block[6, 7 - line] = block[5, 7 - line]
+        #         decryptedtext_V1[8 * i:8 * i + 8, 8 * j:8 * j + 8] = block
+
         decryptedtext_YUV = cv2.merge([decryptedtext_Y, decryptedtext_U, decryptedtext_V])  # 合并通道
         result_decrypt = cv2.cvtColor(decryptedtext_YUV, cv2.COLOR_YUV2BGR)
         cv2.imshow('decrypt Y', decryptedtext_Y)
-        # cv2.imshow('decrypt U', decryptedtext_U)
-        # cv2.imshow('decrypt V', decryptedtext_V)
-
+        cv2.imshow('decrypt U', decryptedtext_U)
+        cv2.imshow('decrypt V', decryptedtext_V)
         cv2.imshow('YUV are decrypted and converted to RGB', result_decrypt)  # 显示已解密的图片
+        cv2.imwrite('construct_jpeg/encode_img/square3_dec_aftertwitter.jpeg', result_decrypt)
         cv2.waitKey(0)
 
-        # cv2.imwrite('../img/de_' + image_name, result_decrypt)
-        # cv2.imwrite('../img/Q_test/de_40' + image_name, result_decrypt)
-        # cv2.imwrite('../img/de_50' + image_name, result_decrypt)
-        # cv2.imwrite('../result/ourscheme/' + image_name, result_decrypt)
 
 
 if __name__ == '__main__':

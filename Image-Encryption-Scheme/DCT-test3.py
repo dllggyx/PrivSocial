@@ -42,7 +42,7 @@ if __name__ == '__main__':
     src = cv2.imread('./square3.jpeg', 0)
     src = src.astype(np.float32)
     temp = dct_block(src)
-    cv2.imshow('temp', temp.astype(np.uint8))
+    cv2.imshow('temp.jpeg', temp.astype(np.uint8))
     temp = temp.astype(np.uint8)
     dst = idct_block(temp)
     cv2.imshow('dst', dst.astype(np.uint8))

@@ -1,29 +1,12 @@
-# import cv2
-# import hashlib
-# import numpy as np
-# import matplotlib.pyplot as plt
-# from pyblake2 import blake2s
 import base64
 
-import matplotlib.pyplot as plt  # plt 用于显示图片
-import numpy as np
 import cv2
-import copy
-
-import DCT_test2
-
-'''
-jpeg压缩函数
-data:要压缩的灰度图像数据流
-quality_scale控制压缩质量(1-99)，默认为50，值越小图像约清晰
-return:得到压缩后的图像数据，为FFD9开头的jpeg格式字符串
-'''
+import numpy as np
 
 
-def compress(img_data, quality_scale=50):
-    # 获取图像数据流宽高
-    h, w = img_data.shape
-    # 标准亮度量化表
+
+# write metadata to the target file to construct a JPEG file
+def generate_jpeg(img_data, target_path, quality_scale=50):
     Qy = np.array([[16, 11, 10, 16, 24, 40, 51, 61],
                    [12, 12, 14, 19, 26, 58, 60, 55],
                    [14, 13, 16, 24, 40, 57, 69, 56],
@@ -33,7 +16,7 @@ def compress(img_data, quality_scale=50):
                    [49, 64, 78, 87, 103, 121, 120, 101],
                    [72, 92, 95, 98, 112, 100, 103, 99]], dtype=np.uint8)
 
-    # 根据压缩质量重新计算量化表
+    # recaculate the Q table
     if quality_scale <= 0:
         quality_scale = 1
     elif quality_scale >= 100:
@@ -46,8 +29,7 @@ def compress(img_data, quality_scale=50):
             tmp = 255
         Qy[int(i / 8)][i % 8] = tmp
 
-
-    # Z字型
+    # ZigZag layout
     ZigZag = [
         0, 1, 5, 6, 14, 15, 27, 28,
         2, 4, 7, 13, 16, 26, 29, 42,
@@ -59,8 +41,8 @@ def compress(img_data, quality_scale=50):
         35, 36, 48, 49, 57, 58, 62, 63]
 
     # DC哈夫曼编码表
-    standard_dc_nrcodes = [0, 0, 7, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
-    standard_dc_values = [4, 5, 3, 2, 6, 1, 0, 7, 8, 9, 10, 11]
+    standard_dc_nrcodes = [0, 0, 7, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]  # 16个数，反映了DC系数的概率分布
+    standard_dc_values = [4, 5, 3, 2, 6, 1, 0, 7, 8, 9, 10, 11]  # 12个数
     pos_in_table = 0
     code_value = 0
     dc_huffman_table = [0] * 16
@@ -106,21 +88,20 @@ def compress(img_data, quality_scale=50):
             pos_in_table += 1
             code_value += 1
         code_value <<= 1
-    # 转成float类型
+
+    h, w = img_data.shape
     img_data = img_data.astype(np.float64)
-    # 存储最后的哈夫曼编码
     result = ''
     prev = 0
+
     # 分成8*8的块
     for i in range(h // 8):
         for j in range(w // 8):
-            block = img_data[i * 8:(i + 1) * 8, j * 8:(j + 1) * 8] - 128
-            block = cv2.dct(block)
-            # 数据量化
-            block[:] = np.round(block / Qy)
-            # 把量化后的二维矩阵转成一维数组
+            block = img_data[i * 8:(i + 1) * 8, j * 8:(j + 1) * 8]
+            # 把二维矩阵转成一维数组
             arr = [0] * 64
             notnull_num = 0
+
             for k in range(64):
                 tmp = int(block[int(k / 8)][k % 8])
                 arr[ZigZag[k]] = tmp
@@ -220,19 +201,14 @@ def compress(img_data, quality_scale=50):
     res += result
     # EOI文件尾0
     res += 'FFD9'
-    return res
+
+    with open(target_path, 'wb') as f:
+        f.write(base64.b16decode(res.upper()))
 
 
-'''
-jpeg解压缩
-img:解压缩的jpeg灰度图像文件
-return:返回解压缩后的图像原数据，为多维数组形式
-'''
-
-
-def decompress(img):
-    # jpeg解码的所有参数都是从编码后的jpeg文件中读取的
-    with open(img, 'rb') as f:
+def degenerate_jpeg(src_path):
+    ccount = 0
+    with open(src_path, 'rb') as f:
         img_data = f.read()
     res = ''
     for i in img_data:
@@ -289,193 +265,86 @@ def decompress(img):
             code_value += 1
         code_value <<= 1
 
-    # 获取压缩的图像数据
-    tmp_result = res[656:-4]
-    result = ''
-    i = 0
-    while i < len(tmp_result):
-        tmp0 = tmp_result[i:i + 2]
-        result += tmp0
-        i += 2
-        if (tmp0 == 'FF'):
+        # 获取压缩的图像数据
+        tmp_result = res[656:-4]
+        result = ''
+        i = 0
+        while i < len(tmp_result):
+            tmp0 = tmp_result[i:i + 2]
+            result += tmp0
             i += 2
-    # 得到哈夫曼编码后的01字符串
-    result = bin(int(result, 16))[2:].rjust(len(result) * 4, '0')
+            if (tmp0 == 'FF'):
+                i += 2
+        # 得到哈夫曼编码后的01字符串
+        result = bin(int(result, 16))[2:].rjust(len(result) * 4, '0')
 
-    img_data = np.zeros((h, w))
-    pos = 0
-    prev = 0
-    for j in range(h // 8):
-        for k in range(w // 8):
-            # 逆dc哈夫曼编码
-            # 正向最大匹配
-            arr = [0]
-            # 计算EOB块中0的个数
-            num = 0
-            for i in range(8, 2, -1):
-                tmp = reverse_dc_huffman_table.get(result[pos:pos + i])
-                # 匹配成功
-                if (tmp):
-                    pos += i
-                    num += 1
-                    # DC系数为0
-                    if tmp == '00':
-                        # 是差值编码 差点忘了加上prev
-                        arr[0] = 0 + prev
-                        prev = arr[0]
-                        break
-                    data1 = int(tmp[1], 16)
-                    data2 = result[pos:pos + data1]
-                    if data2[0] == '0':
-                        # 负数
-                        data = -(int(data2, 2) ^ (2 ** data1 - 1))
-                    else:
-                        data = int(data2, 2)
-                    arr[0] = data + prev
-                    prev = arr[0]
-                    pos += data1
-                    break
-            # 逆ac哈夫曼编码
-            while (num < 64):
-                # AC系数编码长度是从16bits到2bits
-                for i in range(16, 1, -1):
-                    tmp = reverse_ac_huffman_table.get(result[pos:pos + i])
+        img_data = np.zeros((h, w))
+        pos = 0
+        prev = 0
+        for j in range(h // 8):
+            for k in range(w // 8):
+                # 逆dc哈夫曼编码
+                # 正向最大匹配
+                arr = [0]
+                # 计算EOB块中0的个数
+                num = 0
+                for i in range(8, 2, -1):
+                    print(ccount)
+                    ccount = ccount + 1
+                    tmp = reverse_dc_huffman_table.get(result[pos:pos + i])
+                    # 匹配成功
                     if (tmp):
                         pos += i
-                        if (tmp == '00'):
-                            arr += ([0] * (64 - num))
-                            num = 64
+                        num += 1
+                        # DC系数为0
+                        if tmp == '00':
+                            # 是差值编码
+                            arr[0] = 0 + prev
+                            prev = arr[0]
                             break
-                        time = int(tmp[0], 16)
                         data1 = int(tmp[1], 16)
                         data2 = result[pos:pos + data1]
-                        pos += data1
-                        # data2为空，赋值为0，应对(15,0)这种情况
-                        data2 = data2 if data2 else '0'
                         if data2[0] == '0':
-                            # 负数,注意负号和异或运算的优先级
+                            # 负数
                             data = -(int(data2, 2) ^ (2 ** data1 - 1))
                         else:
                             data = int(data2, 2)
-                        num += time + 1
-                        # time个0
-                        arr += ([0] * time)
-                        # 非零值或最后一个单元0
-                        arr.append(data)
+                        arr[0] = data + prev
+                        prev = arr[0]
+                        pos += data1
                         break
-            # 逆ZigZag扫描,得到block量化块
-            block = np.zeros((8, 8))
-            for i in range(64):
-                block[int(i / 8)][i % 8] = arr[ZigZag[i]]
-            # 逆量化
-            block = block * Qy
-            # 逆DCT变换
-            block = cv2.idct(block)
-            img_data[j * 8:(j + 1) * 8, k * 8:(k + 1) * 8] = block + 128
-    img_data = img_data.astype(np.uint8)
-    return img_data
-
-
-
-def main():
-    # 原始图像路径,灰度图像
-    img_path = './img/lena.jpeg'
-    # 读取原始图像,cv2.imread()默认是用color模式读取的，保持原样读取要加上第二个参数-1,即CV_LOAD_IMAGE_GRAYSCALE
-    # 得到图像原数据流
-    img_data = cv2.imread(img_path, 0)
-    cv2.imwrite('./img/img0.jpeg', img_data)
-    img0 = cv2.imread('./img/img0.jpeg', -1)
-    # 得到压缩后图像数据
-    img_compress = compress(img_data, 50)
-    # 存储压缩后的图像
-    img_compress_path = './img/lena_compress.jpeg'
-    with open(img_compress_path, 'wb') as f:
-        f.write(base64.b16decode(img_compress.upper()))
-    # jpeg图像解压缩测试
-    img_decompress = decompress(img_compress_path)
-    img1 = cv2.imread('./img/lena_compress.jpeg', -1)
-
-    # 结果展示
-    plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文乱码
-    # 子图1，原始图像
-    plt.subplot(221)
-    # imshow()对图像进行处理，画出图像，show()进行图像显示
-    plt.imshow(img_data, cmap=plt.cm.gray)
-    plt.title('原始图像')
-    # 不显示坐标轴
-    plt.axis('off')
-
-    # 子图2，自己写的jpeg压缩后解码图像
-    plt.subplot(222)
-    plt.imshow(img_decompress, cmap=plt.cm.gray)
-    plt.title('自写jpeg图像(自解压)')
-    plt.axis('off')
-
-    # 子图3，jpeg压缩后解码图像
-    plt.subplot(223)
-    plt.imshow(img0, cmap=plt.cm.gray)
-    plt.title('官方jpeg图像')
-    plt.axis('off')
-
-    # 子图3，jpeg压缩后解码图像
-    plt.subplot(224)
-    plt.imshow(img1, cmap=plt.cm.gray)
-    plt.title('自写jpeg图像(官方解压)')
-    plt.axis('off')
-    plt.show()
-
-def compress_block(image, quality):
-    (w, h) = image.shape
-    image = image.astype(np.float32)
-    image = image - 128
-    result_image = image
-    for j in range(0, int(w / 8)):
-        for i in range(0, int(h / 8)):
-            rect = image[8 * i:8 * i + 8, 8 * j:8 * j + 8]
-            rect_dct = cv2.dct(rect)
-            rect_dct1 = DCT_test2.compress_emulate(rect_dct, True, quality)
-            rect_dct2 = DCT_test2.compress_emulate(rect_dct1, False, quality)
-            rect_idct = cv2.idct(rect_dct2)
-            result_image[8 * i:8 * i + 8, 8 * j:8 * j + 8] = rect_idct
-    return result_image + 128
-
-
-if __name__ == '__main__':
-    main()
-    img_compress_path = './result/src/square1.jpeg'
-    src = cv2.imread(img_compress_path, 0)
-    cv2.imwrite('temp.jpeg', src)
-    dst = decompress('temp.jpeg')
-    cv2.imshow('dst', dst)
-    # # idx = 5
-    # for idx in range(1,21):
-    #     img_path = './result/src/square' + str(idx) + '.jpeg'
-    #     img_src = cv2.imread(img_path, -1)
-    #
-    #     ycbcr_image = cv2.cvtColor(img_src, cv2.COLOR_BGR2YUV)
-    #
-    #     Y = ycbcr_image[:, :, 0]
-    #     U = ycbcr_image[:, :, 1]
-    #     V = ycbcr_image[:, :, 2]
-    #
-    #     # 存储压缩后的图像
-    #     img_compress_path = './result/com/square' + str(idx) + '.jpeg'
-    #
-    #     # 对Y逐块做dct 量化 idct模拟压缩过程
-    #     # 对UV使用opencv自带的压缩
-    #     # 三种标准下的压缩方案要统一
-    #
-    #     cv2.imwrite('./result/com/u.jpeg', U, [cv2.IMWRITE_JPEG_QUALITY, 50])
-    #     cv2.imwrite('./result/com/v.jpeg', V, [cv2.IMWRITE_JPEG_QUALITY, 50])
-    #     yy = compress_block(Y, 50).astype(np.uint8)
-    #     uu = cv2.imread('./result/com/u.jpeg', -1)
-    #     vv = cv2.imread('./result/com/v.jpeg', -1)
-    #
-    #     YUV = cv2.merge([yy, uu, vv])  # 合并通道
-    #     result = cv2.cvtColor(YUV, cv2.COLOR_YUV2BGR)
-    #     cv2.imwrite(img_compress_path, result, [cv2.IMWRITE_JPEG_QUALITY, 100])
-
-
-
-
-
+                # 逆ac哈夫曼编码
+                while (num < 64):
+                    # AC系数编码长度是从16bits到2bits
+                    for i in range(16, 1, -1):
+                        tmp = reverse_ac_huffman_table.get(result[pos:pos + i])
+                        if (tmp):
+                            pos += i
+                            if (tmp == '00'):
+                                arr += ([0] * (64 - num))
+                                num = 64
+                                break
+                            time = int(tmp[0], 16)
+                            data1 = int(tmp[1], 16)
+                            data2 = result[pos:pos + data1]
+                            pos += data1
+                            # data2为空，赋值为0，应对(15,0)这种情况
+                            data2 = data2 if data2 else '0'
+                            if data2[0] == '0':
+                                # 负数,注意负号和异或运算的优先级
+                                data = -(int(data2, 2) ^ (2 ** data1 - 1))
+                            else:
+                                data = int(data2, 2)
+                            num += time + 1
+                            # time个0
+                            arr += ([0] * time)
+                            # 非零值或最后一个单元0
+                            arr.append(data)
+                            break
+                # 逆ZigZag扫描,得到block量化块
+                block = np.zeros((8, 8))
+                for i in range(64):
+                    block[int(i / 8)][i % 8] = arr[ZigZag[i]]
+                img_data[j * 8:(j + 1) * 8, k * 8:(k + 1) * 8] = block
+        img_data = img_data.astype(np.uint8)
+        return img_data

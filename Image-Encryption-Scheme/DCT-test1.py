@@ -89,7 +89,7 @@ def block_float32_encrypt_decrypt(image_block, random):
                 # print(integer)
                 integer = -1024
             temp = integer + decimal
-            # binary = struct.pack('!f', temp)
+            # binary = struct.pack('!f', temp.jpeg)
             result_block[i][j] = temp
     return result_block
 

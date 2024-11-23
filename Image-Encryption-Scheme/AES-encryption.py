@@ -274,7 +274,7 @@ if __name__ == '__main__':
 
 
             ''' crypt(en_path, de_path, key, 'd') '''
-            # crypt('./aes-test/temp', './aes-test/temp_d', key, 'd')
+            # crypt('./aes-test/temp.jpeg', './aes-test/temp_d', key, 'd')
             #
             ddd = bin_to_mat(copy, './aes-test/decode_encap', mode)
             cv2.imwrite('./aes-test/decrypt_encap.jpeg', ddd)

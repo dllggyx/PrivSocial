@@ -13,10 +13,10 @@ config = ConfigParser()
 # 读取配置文件
 config.read('config.ini',encoding='utf-8')
 
-class Config:
-    def __init__(self):
-        self.quantizationFlag = True
-        self.downsamplingFlag = True
+# class Config:
+#     def __init__(self):
+#         self.quantizationFlag = True
+#         self.downsamplingFlag = True
 
 def alpha(u):
     if u == 0:
@@ -67,6 +67,7 @@ def DCT(image):
 将加密方式由异或变为乘除
 '''
 def block_float32_encrypt_decrypt(image_block, random, isEncrypt):
+    # config.read('../config.ini',encoding='utf-8')
     keyRangeFloor = config.getfloat('GlobalVars', 'keyRangeFloor')
     keyRangeCeil = config.getfloat('GlobalVars', 'keyRangeCeil')
 
@@ -81,19 +82,21 @@ def block_float32_encrypt_decrypt(image_block, random, isEncrypt):
             '''
             '''the absolute value of result_block must < 16320'''
 
-            if i == 0 and j == 0:
-                result_block[i][j] = image_block[i][j]
-                continue
-            if i == w-1 and j == 0:
-                result_block[i][j] = image_block[i][j]
-                continue
-            if i == 0 and j == h-1:
-                result_block[i][j] = image_block[i][j]
-                continue
-            if i == w-1 and j == h-1:
-                result_block[i][j] = image_block[i][j]
-                continue
             # 因为方块做了旋转和翻转，所以要找准[0][0]实际在哪个位置
+            # 这几个if作用是保证DC系数未被加密
+            # if i == 0 and j == 0:
+            #     result_block[i][j] = image_block[i][j]
+            #     continue
+            # if i == w-1 and j == 0:
+            #     result_block[i][j] = image_block[i][j]
+            #     continue
+            # if i == 0 and j == h-1:
+            #     result_block[i][j] = image_block[i][j]
+            #     continue
+            # if i == w-1 and j == h-1:
+            #     result_block[i][j] = image_block[i][j]
+            #     continue
+
 
 
             integer = int(image_block[i][j])
@@ -179,7 +182,7 @@ def idct_block(image, key_seed, quantizationFlag):
     return result_image
 
 
-def idct_block_nocompress(image, key_seed):
+def idct_block_decompress(image, key_seed):
     decompressQuality = config.getint('GlobalVars', 'decompressQuality')
     random.seed(key_seed)
     (w, h) = image.shape
@@ -188,10 +191,24 @@ def idct_block_nocompress(image, key_seed):
     for j in range(0, int(w / 8)):
         for i in range(0, int(h / 8)):
             rect = image[8 * i:8 * i + 8, 8 * j:8 * j + 8]
-            rect_idct = compress_emulate(rect, False, decompressQuality)
-            de_rect_idct = block_float32_encrypt_decrypt(rect_idct, random, False)
+            ''' 如果要模拟压缩的话就取消注释这行，并将下一行参数中的rect变为rect_idct '''
+            # rect_idct = compress_emulate(rect, False, decompressQuality)
+            de_rect_idct = block_float32_encrypt_decrypt(rect, random, False)
             rect_idct = cv2.idct(de_rect_idct)
             rect_idct = rect_idct + 128
+            result_image[8 * i:8 * i + 8, 8 * j:8 * j + 8] = rect_idct
+    return result_image
+
+
+def idct_block_pure(image):
+    (w, h) = image.shape
+    image = image.astype(np.float32)
+    result_image = image
+    for j in range(0, int(w / 8)):
+        for i in range(0, int(h / 8)):
+            rect = image[8 * i:8 * i + 8, 8 * j:8 * j + 8]
+            rect_idct = cv2.idct(rect)
+            # rect_idct = rect_idct + 128
             result_image[8 * i:8 * i + 8, 8 * j:8 * j + 8] = rect_idct
     return result_image
 
@@ -205,8 +222,9 @@ def compress_before_idct(image):
         for i in range(0, int(h / 8)):
             rect = image[8 * i:8 * i + 8, 8 * j:8 * j + 8]
             rect_dct = cv2.dct(rect)
-            rect_idct = compress_emulate(rect_dct, True, compressQuality)
-            result_image[8 * i:8 * i + 8, 8 * j:8 * j + 8] = rect_idct
+            ''' 如果要模拟压缩就取消注释这行，并将下一行的rect_dct改为rect_idct '''
+            # rect_idct = compress_emulate(rect_dct, True, compressQuality)
+            result_image[8 * i:8 * i + 8, 8 * j:8 * j + 8] = rect_dct
     return result_image
 
 
